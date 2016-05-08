@@ -10,12 +10,6 @@ Pebble.addEventListener('webviewclosed', function(e) {
 	var configData = JSON.parse(decodeURIComponent(e.response));
 	console.log('Configuration page returned: ' + JSON.stringify(configData));
 
-	if (configData.units && configData.units !== units) {
-		// update units
-		units = configData.units;
-		localStorage.units = configData.units;
-	}
-
 	var toggleDict = {};
 
 	toggleDict.INVERSE_WHEN_DISCONNECTED = configData.inverse_colors_when_bluetooth_disconnected;
@@ -26,4 +20,5 @@ Pebble.addEventListener('webviewclosed', function(e) {
 	}, function() {
 		console.log('Send failed!');
 	});
+});  
 
