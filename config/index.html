@@ -24,10 +24,8 @@
   // Add a 'click' listener
   submitButton.addEventListener('click', function() {
     // Get the config data from the UI elements
-    var backgroundColor = document.getElementById('background_color_input');
-    var foregroundColor = document.getElementById('foreground_color_input');
-    var secondTickCheckbox = document.getElementById('second_tick_checkbox');
-    var animationsCheckbox = document.getElementById('animations_checkbox');
+    var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected');
+    var batteryCheckbox = document.getElementById('show_battery_status');
 
     // Make a data object to be sent, coercing value types to integers
     var options = {
