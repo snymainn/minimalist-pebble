@@ -29,8 +29,8 @@
           'show_battery_status': batteryCheckbox.checked == 'true' ? 1 : 0
         };
 
-        local_storage['inverse_colors_when_bluetooth_disconnected'] = options['inverse_colors_when_bluetooth_disconnected'];
-        local_storage['show_battery_status'] = options['show_battery_status'];
+        localStorage['inverse_colors_when_bluetooth_disconnected'] = options['inverse_colors_when_bluetooth_disconnected'];
+        localStorage['show_battery_status'] = options['show_battery_status'];
         
         console.log('Got options; ' + JSON.stringify(options));
         return options;
