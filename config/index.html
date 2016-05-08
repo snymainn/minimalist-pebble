@@ -28,8 +28,8 @@
 
         // Make a data object to be sent, coercing value types to integers
         var options = {
-          'inverse_colors_when_bluetooth_disconnected': inverseTickCheckbox.checked == 'true' ? 1 : 0,
-          'show_battery_status': batteryCheckbox.checked == 'true' ? 1 : 0
+          'inverse_colors_when_bluetooth_disconnected': inverseTickCheckbox == 'true' ? 1 : 0,
+          'show_battery_status': batteryCheckbox == 'true' ? 1 : 0
         };
 
         localStorage['inverse_colors_when_bluetooth_disconnected'] = options['inverse_colors_when_bluetooth_disconnected'];
