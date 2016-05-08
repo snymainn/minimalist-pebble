@@ -20,8 +20,8 @@
 <script>
     function getConfigData() {
         // Get the config data from the UI elements
-        var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected');
-        var batteryCheckbox = document.getElementById('show_battery_status');
+        var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected').checked;
+        var batteryCheckbox = document.getElementById('show_battery_status').checked;
         
         console.log(inverseTickCheckbox);
         console.log(batteryCheckbox);
