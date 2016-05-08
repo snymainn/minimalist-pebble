@@ -31,7 +31,10 @@
           'inverse_colors_when_bluetooth_disconnected': inverseTickCheckbox == 'true' ? 1 : 0,
           'show_battery_status': batteryCheckbox == 'true' ? 1 : 0
         };
-
+        console.log(options['inverse_colors_when_bluetooth_disconnected']);
+        console.log(options['show_battery_status']);
+        console.log('Got options; ' + JSON.stringify(options));
+        
         localStorage['inverse_colors_when_bluetooth_disconnected'] = options['inverse_colors_when_bluetooth_disconnected'];
         localStorage['show_battery_status'] = options['show_battery_status'];
         
