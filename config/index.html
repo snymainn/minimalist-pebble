@@ -18,20 +18,23 @@
 <tr><td><input id='submit_button' type='button' value='Save'></td><td><input id='submit_button' type='button' value='Cancel'></td></tr>
 </table>
 <script>
-  // Get a handle to the button's HTML element
-  var submitButton = document.getElementById('submit_button');
+    function getConfigData() {
+        // Get the config data from the UI elements
+        var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected');
+        var batteryCheckbox = document.getElementById('show_battery_status');
 
-  // Add a 'click' listener
-  submitButton.addEventListener('click', function() {
-    // Get the config data from the UI elements
-    var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected');
-    var batteryCheckbox = document.getElementById('show_battery_status');
+        // Make a data object to be sent, coercing value types to integers
+        var options = {
+          'inverse_colors_when_bluetooth_disconnected': inverseTickCheckbox.checked == 'true' ? 1 : 0,
+          'show_battery_status': batteryCheckbox.checked == 'true' ? 1 : 0
+        };
 
-    // Make a data object to be sent, coercing value types to integers
-    var options = {
-      'inverse_colors_when_bluetooth_disconnected': inverseTickCheckbox.checked == 'true' ? 1 : 0,
-      'show_battery_status': batteryCheckbox.checked == 'true' ? 1 : 0
-    };
+        local_storage['inverse_colors_when_bluetooth_disconnected'] = options['inverse_colors_when_bluetooth_disconnected'];
+        local_storage['show_battery_status'] = options['show_battery_status'];
+        
+        console.log('Got options; ' + JSON.stringify(options));
+        return options;
+    }
 
     // Determine the correct return URL (emulator vs real watch)
     function getQueryParam(variable, defaultValue) {
@@ -45,10 +48,18 @@
       }
       return defaultValue || false;
     }
-    var return_to = getQueryParam('return_to', 'pebblejs://close#');
 
-    // Encode and send the data when the page closes
-    document.location = return_to + encodeURIComponent(JSON.stringify(options));
+    // Get a handle to the button's HTML element
+    var submitButton = document.getElementById('submit_button');
+
+    // Add a 'click' listener
+    submitButton.addEventListener('click', function() {
+        console.log('Submit');
+    
+        var return_to = getQueryParam('return_to', 'pebblejs://close#');
+
+        // Encode and send the data when the page closes
+        document.location = return_to + encodeURIComponent(JSON.stringify(getConfigData()));
   });
 </script>
  </body>
