@@ -1,13 +1,7 @@
 {
     "appKeys": {
-        "COLOR_BACKGROUND": 5,
-        "COLOR_HOUR_HAND": 9,
-        "COLOR_HOUR_MARKS": 7,
-        "COLOR_LABEL": 6,
-        "COLOR_MINUTE_HAND": 10,
-        "COLOR_MINUTE_MARKS": 8,
-        "SHOW_DATE": 3,
-        "SHOW_NUMBERS": 1
+        "INVERSE_WHEN_DISCONNECTED" : 1,
+        "SHOW_BATTERY_STATUS" : 2
     },
     "capabilities": [
         "configurable"

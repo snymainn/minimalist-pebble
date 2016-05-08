@@ -13,115 +13,37 @@ static AppSync s_sync;
 static uint8_t s_sync_buffer[64];
 
 static GColor gcolor_background, gcolor_hour_marks, gcolor_minute_marks, gcolor_numbers, gcolor_hour_hand, gcolor_minute_hand;
-static bool b_show_numbers, b_show_temperature, b_show_date;
+static bool b_inverse_when_disconnected, b_show_battery_status;
 
 static void load_persisted_values() {
-	// SHOW_NUMBERS
-	if (persist_exists(KEY_SHOW_NUMBERS)) {
-	  b_show_numbers = persist_read_int(KEY_SHOW_NUMBERS);
+
+	// INVERSE IF BLUETOOTH DISCONNECTED
+	if (persist_exists(KEY_INVERSE_WHEN_DISCONNECTED)) {
+	  b_inverse_when_disconnected = persist_read_int(KEY_INVERSE_WHEN_DISCONNECTED);
 	}
 
-	// SHOW_DATE
-	if (persist_exists(KEY_SHOW_DATE)) {
-	  b_show_date = persist_read_int(KEY_SHOW_DATE);
+	// SHOW_BATTERY_STATUS
+	if (persist_exists(KEY_SHOW_BATTERY_STATUS)) {
+	  b_show_battery_status = persist_read_int(KEY_SHOW_BATTERY_STATUS);
 	}
-
-	// COLOR_BACKGROUND
-	if (persist_exists(KEY_COLOR_BACKGROUND)) {
-		int color_hex = persist_read_int(KEY_COLOR_BACKGROUND);
-		gcolor_background = GColorFromHEX(color_hex);
-		window_set_background_color(window, gcolor_background);
-	}
-
-	// COLOR_HOUR_MARKS
-	if (persist_exists(KEY_COLOR_HOUR_MARKS)) {
-		int color_hex = persist_read_int(KEY_COLOR_HOUR_MARKS);
-		gcolor_hour_marks = GColorFromHEX(color_hex);
-	}
-
-	// COLOR_MINUTE_MARKS
-	if (persist_exists(KEY_COLOR_MINUTE_MARKS)) {
-		int color_hex = persist_read_int(KEY_COLOR_MINUTE_MARKS);
-		gcolor_minute_marks = GColorFromHEX(color_hex);
-	}
-
-	// COLOR_LABEL
-	if (persist_exists(KEY_COLOR_LABEL)) {
-		int color_hex = persist_read_int(KEY_COLOR_LABEL);
-		gcolor_numbers = GColorFromHEX(color_hex);
-	}
-
-	// COLOR_HOUR_HAND
-	if (persist_exists(KEY_COLOR_HOUR_HAND)) {
-		int color_hex = persist_read_int(KEY_COLOR_HOUR_HAND);
-		gcolor_hour_hand = GColorFromHEX(color_hex);
-	}
-
-	// COLOR_MINUTE_HAND
-	if (persist_exists(KEY_COLOR_MINUTE_HAND)) {
-		int color_hex = persist_read_int(KEY_COLOR_MINUTE_HAND);
-		gcolor_minute_hand = GColorFromHEX(color_hex);
-	}
-
 }
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
- 		Tuple *show_numbers_t = dict_find(iter, KEY_SHOW_NUMBERS);
-	if(show_numbers_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Show numbers %d", show_numbers_t->value->uint8);
- 		b_show_numbers = show_numbers_t->value->uint8;
-		persist_write_int(KEY_SHOW_NUMBERS, b_show_numbers);
+
+ 	Tuple *inverse_when_disconnected_t = dict_find(iter, KEY_INVERSE_WHEN_DISCONNECTED);
+	if(inverse_when_disconnected_t) {
+		APP_LOG(APP_LOG_LEVEL_INFO, "Inverse when disconnected %d", inverse_when_disconnected_t->value->uint8);
+ 		b_inverse_when_disconnected = inverse_when_disconnected_t->value->uint8;
+		persist_write_int(KEY_INVERSE_WHEN_DISCONNECTED, b_inverse_when_disconnected);
  	}
 
-	Tuple *show_date_t = dict_find(iter, KEY_SHOW_DATE);
-	if(show_date_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Show date %d", show_date_t->value->uint8);
- 		b_show_date = show_date_t->value->uint8;
-		persist_write_int(KEY_SHOW_DATE, show_date_t->value->uint8);
+	Tuple *show_battery_status_t = dict_find(iter, KEY_SHOW_BATTERY_STATUS);
+	if(show_battery_status_t) {
+		APP_LOG(APP_LOG_LEVEL_INFO, "Show battery_status %d", show_battery_status_t->value->uint8);
+ 		b_show_battery_status = show_battery_status_t->value->uint8;
+		persist_write_int(KEY_SHOW_BATTERY_STATUS, show_battery_status_t->value->uint8);
  	}
-
-	Tuple *color_background_t = dict_find(iter, KEY_COLOR_BACKGROUND);
-	if(color_background_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Background color %lu", color_background_t->value->int32);
- 		gcolor_background = GColorFromHEX(color_background_t->value->int32);
-		window_set_background_color(window, gcolor_background);
-		persist_write_int(KEY_COLOR_BACKGROUND, color_background_t->value->int32);
- 	}
-
-	Tuple *color_label_t = dict_find(iter, KEY_COLOR_LABEL);
-	if(color_label_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Label color %lu", color_label_t->value->int32);
- 		gcolor_numbers = GColorFromHEX(color_label_t->value->int32);
-		persist_write_int(KEY_COLOR_LABEL, color_label_t->value->int32);
- 	}
-
-	Tuple *color_hour_marks_t = dict_find(iter, KEY_COLOR_HOUR_MARKS);
-	if(color_hour_marks_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Hour mark color %lu", color_hour_marks_t->value->int32);
- 		gcolor_hour_marks = GColorFromHEX(color_hour_marks_t->value->int32);
-		persist_write_int(KEY_COLOR_HOUR_MARKS, color_hour_marks_t->value->int32);
- 	}
-
-	Tuple *color_minute_marks_t = dict_find(iter, KEY_COLOR_MINUTE_MARKS);
-	if(color_minute_marks_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Minute mark color %lu", color_minute_marks_t->value->int32);
- 		gcolor_minute_marks = GColorFromHEX(color_minute_marks_t->value->int32);
-		persist_write_int(KEY_COLOR_MINUTE_MARKS, color_minute_marks_t->value->int32);
- 	}
-
-	Tuple *color_hour_hand_t = dict_find(iter, KEY_COLOR_HOUR_HAND);
-	if(color_hour_hand_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Hour hand color %lu", color_hour_hand_t->value->int32);
- 		gcolor_hour_hand = GColorFromHEX(color_hour_hand_t->value->int32);
-		persist_write_int(KEY_COLOR_HOUR_HAND, color_hour_hand_t->value->int32);
- 	}
-
-	Tuple *color_minute_hand_t = dict_find(iter, KEY_COLOR_MINUTE_HAND);
-	if(color_minute_hand_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Minute hand color %lu", color_minute_hand_t->value->int32);
- 		gcolor_minute_hand = GColorFromHEX(color_minute_hand_t->value->int32);
-		persist_write_int(KEY_COLOR_MINUTE_HAND, color_minute_hand_t->value->int32);
- 	}
+	
 }
 
 static bool color_hour_marks(GDrawCommand *command, uint32_t index, void *context) {
@@ -176,56 +98,53 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 	}
 	
 	// numbers
-	if (b_show_numbers) {
-		graphics_context_set_text_color(ctx, gcolor_numbers);
-		
+	graphics_context_set_text_color(ctx, gcolor_numbers);
+	
 #ifdef PBL_RECT
-		graphics_draw_text(ctx, "12", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(63, 18, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-		graphics_draw_text(ctx, "1", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(85, 23, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "2", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(104, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "3", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(112, 68, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "4", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(104, 93, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "5", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(85, 110, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "6", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(62, 118, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-		graphics_draw_text(ctx, "7", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(39, 110, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-		graphics_draw_text(ctx, "8", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(20, 93, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-		graphics_draw_text(ctx, "9", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(14, 68, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-		graphics_draw_text(ctx, "10", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(20, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-		graphics_draw_text(ctx, "11", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(39, 23, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "12", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(63, 18, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	graphics_draw_text(ctx, "1", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(85, 23, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "2", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(104, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "3", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(112, 68, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "4", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(104, 93, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "5", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(85, 110, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "6", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(62, 118, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	graphics_draw_text(ctx, "7", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(39, 110, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "8", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(20, 93, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "9", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(14, 68, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "10", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(20, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "11", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(39, 23, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 #else
-		graphics_draw_text(ctx, "12", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(80, 10, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-		graphics_draw_text(ctx, "1", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(107, 20, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "2", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(130, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "3", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(140, 74, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "4", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(130, 106, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "5", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(107, 126, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-		graphics_draw_text(ctx, "6", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(81, 136, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-		graphics_draw_text(ctx, "7", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(53, 124, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-		graphics_draw_text(ctx, "8", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(29, 106, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-		graphics_draw_text(ctx, "9", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(20, 74, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-		graphics_draw_text(ctx, "10", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(28, 42, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-		graphics_draw_text(ctx, "11", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(50, 22, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "12", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(80, 10, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	graphics_draw_text(ctx, "1", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(107, 20, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "2", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(130, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "3", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(140, 74, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "4", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(130, 106, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "5", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(107, 126, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+	graphics_draw_text(ctx, "6", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(81, 136, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	graphics_draw_text(ctx, "7", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(53, 124, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "8", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(29, 106, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "9", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(20, 74, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "10", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(28, 42, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+	graphics_draw_text(ctx, "11", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(50, 22, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 #endif
-	}
+
 }
 
 static void hands_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_bounds(layer);
-	GPoint center = grect_center_point(&bounds);
+//	GPoint center = grect_center_point(&bounds);
 
 	time_t now = time(NULL);
 	struct tm *t = localtime(&now);
 
 	// date
-	if (b_show_date) {
-		graphics_context_set_text_color(ctx, gcolor_numbers);
-		int offset = !b_show_numbers * 10;
+	graphics_context_set_text_color(ctx, gcolor_numbers);
+	int offset = 0;
 #ifdef PBL_RECT
-		graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(80, 75, 40 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(80, 75, 40 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 #else
-		graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18), GRect(100, 78, 45 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18), GRect(100, 78, 45 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 #endif
-	}
 
 	// minute hand
 	graphics_context_set_fill_color(ctx, gcolor_minute_hand);
@@ -298,9 +217,6 @@ static void init() {
 		gcolor_numbers = GColorWhite;
 		gcolor_hour_hand = GColorWhite;
  #endif
-
-	b_show_numbers = true;
-	b_show_date = true;
 
 	window = window_create();
 	window_set_window_handlers(window, (WindowHandlers) {
