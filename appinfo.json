@@ -1,0 +1,34 @@
+{
+    "appKeys": {
+        "COLOR_BACKGROUND": 5,
+        "COLOR_HOUR_HAND": 9,
+        "COLOR_HOUR_MARKS": 7,
+        "COLOR_LABEL": 6,
+        "COLOR_MINUTE_HAND": 10,
+        "COLOR_MINUTE_MARKS": 8,
+        "SHOW_DATE": 3,
+        "SHOW_NUMBERS": 1
+    },
+    "capabilities": [
+        "configurable"
+    ],
+    "companyName": "Tommy S-Andreassen",
+    "enableMultiJS": false,
+    "longName": "Minimalist Analog",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "Minimalist",
+    "targetPlatforms": [
+        "aplite",
+        "basalt",
+        "chalk"
+    ],
+    "uuid": "0f910221-7ddf-412e-b176-ece076be46f4",
+    "versionLabel": "0.1",
+    "watchapp": {
+        "watchface": true
+    }
+}
