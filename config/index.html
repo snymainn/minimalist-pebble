@@ -6,22 +6,25 @@
   <body>
 <table cellpadding="5">
 <tr><td colspan="2">
-<input id='inverse_colors_when_bluetooth_disconnected' type='checkbox' checked="true">
-  Inverse colors when bluetooth is disconnected
+<input id='inverse_colors_when_bluetooth_disconnected' type='checkbox'>
+  Inverse colors when bluetooth is disconnected 
 </input>
 </td></tr>
 <tr><td colspan="2">
-<input id='show_battery_status' type='checkbox' checked="true">
+<input id='show_battery_status' type='checkbox'>
   Show battery status
 </input>
 </td></tr>
-<tr><td><input id='submit_button' type='button' value='Save'></td><td><input id='submit_button' type='button' value='Cancel'></td></tr>
+<tr><td><input id='submit_button' type='button' value='Save'></td></tr>
 </table>
 <script>
     function getConfigData() {
         // Get the config data from the UI elements
         var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected');
         var batteryCheckbox = document.getElementById('show_battery_status');
+        
+        console.log(inverseTickCheckbox);
+        console.log(batteryCheckbox);
 
         // Make a data object to be sent, coercing value types to integers
         var options = {
