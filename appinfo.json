@@ -11,14 +11,19 @@
     "longName": "Minimalist Analog",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [    
+            {"type": "bitmap",
+            "name": "IMAGE_BT_ICON",
+            "file": "bt-icon_small.png"
+            }
+        ]
+
     },
     "sdkVersion": "3",
     "shortName": "Minimalist",
     "targetPlatforms": [
         "aplite",
-        "basalt",
-        "chalk"
+        "basalt"
     ],
     "uuid": "0f910221-7ddf-412e-b176-ece076be46f4",
     "versionLabel": "0.1",

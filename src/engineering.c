@@ -3,7 +3,7 @@
 #include "engineering.h"
 
 static Window *window;
-static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
+static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer, *s_battery_layer;
 static TextLayer *s_day_label, *s_num_label;
 
 static GPath *s_minute_arrow, *s_hour_arrow;
@@ -14,6 +14,68 @@ static uint8_t s_sync_buffer[64];
 
 static GColor gcolor_background, gcolor_hour_marks, gcolor_minute_marks, gcolor_numbers, gcolor_hour_hand, gcolor_minute_hand;
 static bool b_inverse_when_disconnected, b_show_battery_status;
+
+static int s_battery_level;
+static char s_battery_buffer[5];
+
+static BitmapLayer *s_background_layer, *s_bt_icon_layer;
+static GBitmap *s_background_bitmap, *s_bt_icon_bitmap;
+
+static void battery_callback(BatteryChargeState state) {
+  // Record the new battery level
+  s_battery_level = state.charge_percent;
+  // Update meter
+  layer_mark_dirty(s_battery_layer);
+}
+
+static void bluetooth_callback(bool connected) {    
+    // Show icon if disconnected
+    layer_set_hidden(bitmap_layer_get_layer(s_bt_icon_layer), connected);
+    printf("Got here\n");
+
+    if(!connected && b_inverse_when_disconnected && gcolor_equal(gcolor_background, GColorBlack)) {
+        printf("Got here 2222\n");
+	    gcolor_background = GColorWhite;
+	    gcolor_minute_hand = GColorBlack;
+	
+	#ifdef PBL_COLOR
+		gcolor_hour_marks = GColorDarkGray;
+		gcolor_minute_marks = GColorLightGray;
+		gcolor_numbers = GColorDarkGray;
+		gcolor_hour_hand = GColorRed;
+	#else
+		gcolor_hour_marks = GColorBlack;
+		gcolor_minute_marks = GColorBlack;
+		gcolor_numbers = GColorBlack;
+		gcolor_hour_hand = GColorBlack;
+    #endif
+        window_set_background_color(window, gcolor_background);    
+        layer_mark_dirty(s_date_layer);
+        layer_mark_dirty(s_hands_layer);
+        layer_mark_dirty(s_battery_layer);
+    }
+    if (connected && gcolor_equal(gcolor_background, GColorWhite)) {
+    	// Default colors
+	    gcolor_background = GColorBlack;
+	    gcolor_minute_hand = GColorWhite;
+	
+	#ifdef PBL_COLOR
+		gcolor_hour_marks = GColorLightGray;
+		gcolor_minute_marks = GColorDarkGray;
+		gcolor_numbers = GColorLightGray;
+		gcolor_hour_hand = GColorRed;
+	#else
+		gcolor_hour_marks = GColorWhite;
+		gcolor_minute_marks = GColorWhite;
+		gcolor_numbers = GColorWhite;
+		gcolor_hour_hand = GColorWhite;
+    #endif
+        window_set_background_color(window, gcolor_background);
+        layer_mark_dirty(s_date_layer);
+        layer_mark_dirty(s_hands_layer);
+        layer_mark_dirty(s_battery_layer);
+    }
+}
 
 static void load_persisted_values() {
 
@@ -32,16 +94,19 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 
  	Tuple *inverse_when_disconnected_t = dict_find(iter, KEY_INVERSE_WHEN_DISCONNECTED);
 	if(inverse_when_disconnected_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Inverse when disconnected %d", inverse_when_disconnected_t->value->uint8);
+		//APP_LOG(APP_LOG_LEVEL_INFO, "Inverse when disconnected %d", inverse_when_disconnected_t->value->uint8);
  		b_inverse_when_disconnected = inverse_when_disconnected_t->value->uint8;
 		persist_write_int(KEY_INVERSE_WHEN_DISCONNECTED, b_inverse_when_disconnected);
+		bluetooth_callback(connection_service_peek_pebble_app_connection()); 
  	}
 
 	Tuple *show_battery_status_t = dict_find(iter, KEY_SHOW_BATTERY_STATUS);
 	if(show_battery_status_t) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "Show battery_status %d", show_battery_status_t->value->uint8);
+		//APP_LOG(APP_LOG_LEVEL_INFO, "Show battery_status %d", show_battery_status_t->value->uint8);
  		b_show_battery_status = show_battery_status_t->value->uint8;
 		persist_write_int(KEY_SHOW_BATTERY_STATUS, show_battery_status_t->value->uint8);
+		// Update meter
+        layer_mark_dirty(s_battery_layer);
  	}
 	
 }
@@ -100,7 +165,6 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 	// numbers
 	graphics_context_set_text_color(ctx, gcolor_numbers);
 	
-#ifdef PBL_RECT
 	graphics_draw_text(ctx, "12", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(63, 18, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 	graphics_draw_text(ctx, "1", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(85, 23, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
 	graphics_draw_text(ctx, "2", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(104, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
@@ -113,21 +177,6 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 	graphics_draw_text(ctx, "9", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(14, 68, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 	graphics_draw_text(ctx, "10", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(20, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 	graphics_draw_text(ctx, "11", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(39, 23, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-#else
-	graphics_draw_text(ctx, "12", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(80, 10, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-	graphics_draw_text(ctx, "1", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(107, 20, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-	graphics_draw_text(ctx, "2", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(130, 43, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-	graphics_draw_text(ctx, "3", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(140, 74, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-	graphics_draw_text(ctx, "4", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(130, 106, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-	graphics_draw_text(ctx, "5", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(107, 126, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
-	graphics_draw_text(ctx, "6", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(81, 136, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-	graphics_draw_text(ctx, "7", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(53, 124, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-	graphics_draw_text(ctx, "8", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(29, 106, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-	graphics_draw_text(ctx, "9", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(20, 74, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-	graphics_draw_text(ctx, "10", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(28, 42, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-	graphics_draw_text(ctx, "11", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(50, 22, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-#endif
-
 }
 
 static void hands_update_proc(Layer *layer, GContext *ctx) {
@@ -140,19 +189,19 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	// date
 	graphics_context_set_text_color(ctx, gcolor_numbers);
 	int offset = 0;
-#ifdef PBL_RECT
-	graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(80, 75, 40 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-#else
-	graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18), GRect(100, 78, 45 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-#endif
+	graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_14), 
+	    GRect(80, 75, 40 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+
 
 	// minute hand
 	graphics_context_set_fill_color(ctx, gcolor_minute_hand);
+	//graphics_context_set_stroke_color(ctx, gcolor_minute_hand);
 	gpath_rotate_to(s_minute_arrow, TRIG_MAX_ANGLE * t->tm_min / 60);
 	gpath_draw_filled(ctx, s_minute_arrow);
 
 	// hour hand
 	graphics_context_set_fill_color(ctx, gcolor_hour_hand);
+	//graphics_context_set_stroke_color(ctx, gcolor_hour_hand);
 	gpath_rotate_to(s_hour_arrow, (TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / (12 * 6));
 	gpath_draw_filled(ctx, s_hour_arrow);
 
@@ -168,6 +217,34 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 	strftime(s_date_buffer, sizeof(s_date_buffer), "%a %d", t);
 	uppercase(s_date_buffer);
 }
+
+static void battery_update_proc(Layer *layer, GContext *ctx) {
+    GRect bounds = layer_get_bounds(layer);
+
+    // Find the width of the bar
+    int width = (int)((((float)s_battery_level)/100.0)*bounds.size.w);
+
+    // Draw the background
+    graphics_context_set_fill_color(ctx, gcolor_background);
+    graphics_fill_rect(ctx, GRect(0, 0, bounds.size.w, 1), 0, GCornerNone);
+
+    // Draw the bar
+    if (b_show_battery_status) {
+        graphics_context_set_fill_color(ctx, gcolor_numbers);
+        graphics_fill_rect(ctx, GRect(0, 0, width, 1), 0, GCornerNone);
+    }
+
+    if (s_battery_level <= 20) {
+        memset(s_battery_buffer, '\0', 5);
+        snprintf(s_battery_buffer, 4, "%d", s_battery_level);
+        graphics_context_set_text_color(ctx, gcolor_numbers);
+        int offset = 20;
+        graphics_draw_text(ctx, s_battery_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_14), 
+            GRect(bounds.size.w-offset, bounds.size.h-offset, offset, offset), 
+            GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    }
+}
+
 
 static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
@@ -186,6 +263,20 @@ static void window_load(Window *window) {
 	s_hands_layer = layer_create(bounds);
 	layer_set_update_proc(s_hands_layer, hands_update_proc);
 	layer_add_child(window_layer, s_hands_layer);
+	
+	// Create battery meter Layer
+    s_battery_layer = layer_create(bounds);
+    layer_set_update_proc(s_battery_layer, battery_update_proc);
+    layer_add_child(window_layer, s_battery_layer);
+    
+    // Create the Bluetooth icon GBitmap
+    s_bt_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BT_ICON);
+
+    // Create the BitmapLayer to display the GBitmap
+    s_bt_icon_layer = bitmap_layer_create(GRect(0, bounds.size.h-20, 20, 20));
+    bitmap_layer_set_bitmap(s_bt_icon_layer, s_bt_icon_bitmap);
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_bt_icon_layer));
+
 
 	load_persisted_values();
 }
@@ -198,6 +289,10 @@ static void window_unload(Window *window) {
 	text_layer_destroy(s_num_label);
 
 	layer_destroy(s_hands_layer);
+	layer_destroy(s_battery_layer);
+	
+	gbitmap_destroy(s_bt_icon_bitmap);
+    bitmap_layer_destroy(s_bt_icon_layer);
 }
 
 static void init() {	
@@ -216,7 +311,7 @@ static void init() {
 		gcolor_minute_marks = GColorWhite;
 		gcolor_numbers = GColorWhite;
 		gcolor_hour_hand = GColorWhite;
- #endif
+    #endif
 
 	window = window_create();
 	window_set_window_handlers(window, (WindowHandlers) {
@@ -240,11 +335,24 @@ static void init() {
 
 	app_message_register_inbox_received(inbox_received_handler);
 	app_message_open(64, 64);
+
+	// Register for battery level updates
+    battery_state_service_subscribe(battery_callback);
+    // Ensure battery level is displayed from the start
+    battery_callback(battery_state_service_peek());
+    
+    // Register for Bluetooth connection updates
+    connection_service_subscribe((ConnectionHandlers) {
+        .pebble_app_connection_handler = bluetooth_callback
+    });
+    // Show the correct state of the BT connection from the start
+    bluetooth_callback(connection_service_peek_pebble_app_connection());    
 }
 
 static void deinit() {
 	gpath_destroy(s_minute_arrow);
 	gpath_destroy(s_hour_arrow);
+	layer_destroy(s_battery_layer);
 
 	tick_timer_service_unsubscribe();
 	window_destroy(window);
