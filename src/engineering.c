@@ -31,10 +31,8 @@ static void battery_callback(BatteryChargeState state) {
 static void bluetooth_callback(bool connected) {    
     // Show icon if disconnected
     layer_set_hidden(bitmap_layer_get_layer(s_bt_icon_layer), connected);
-    printf("Got here\n");
 
     if(!connected && b_inverse_when_disconnected && gcolor_equal(gcolor_background, GColorBlack)) {
-        printf("Got here 2222\n");
 	    gcolor_background = GColorWhite;
 	    gcolor_minute_hand = GColorBlack;
 	
@@ -75,6 +73,7 @@ static void bluetooth_callback(bool connected) {
         layer_mark_dirty(s_hands_layer);
         layer_mark_dirty(s_battery_layer);
     }
+
 }
 
 static void load_persisted_values() {
@@ -277,8 +276,13 @@ static void window_load(Window *window) {
     bitmap_layer_set_bitmap(s_bt_icon_layer, s_bt_icon_bitmap);
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_bt_icon_layer));
 
-
 	load_persisted_values();
+
+    // Ensure battery level is displayed from the start
+    battery_callback(battery_state_service_peek());
+
+    // Show the correct state of the BT connection from the start
+    bluetooth_callback(connection_service_peek_pebble_app_connection());
 }
 
 static void window_unload(Window *window) {
@@ -338,22 +342,19 @@ static void init() {
 
 	// Register for battery level updates
     battery_state_service_subscribe(battery_callback);
-    // Ensure battery level is displayed from the start
-    battery_callback(battery_state_service_peek());
     
     // Register for Bluetooth connection updates
     connection_service_subscribe((ConnectionHandlers) {
         .pebble_app_connection_handler = bluetooth_callback
-    });
-    // Show the correct state of the BT connection from the start
-    bluetooth_callback(connection_service_peek_pebble_app_connection());    
+    });    
 }
 
 static void deinit() {
 	gpath_destroy(s_minute_arrow);
 	gpath_destroy(s_hour_arrow);
-	layer_destroy(s_battery_layer);
-
+	
+	battery_state_service_unsubscribe();
+    connection_service_unsubscribe();
 	tick_timer_service_unsubscribe();
 	window_destroy(window);
 }
