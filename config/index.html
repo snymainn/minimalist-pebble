@@ -60,6 +60,17 @@
         // Encode and send the data when the page closes
         document.location = return_to + encodeURIComponent(JSON.stringify(getConfigData()));
   });
+  
+  (function () {
+    var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected');
+    var batteryCheckbox = document.getElementById('show_battery_status');
+    
+    if (localStorage['inverse_colors_when_bluetooth_disconnected']) 
+        inverseTickCheckbox.value = localStorage['inverse_colors_when_bluetooth_disconnected'];
+    if (localStorage['show_battery_status']) 
+        batteryCheckbox.value = localStorage['show_battery_status'];
+  })();
+        
 </script>
  </body>
 </html>
