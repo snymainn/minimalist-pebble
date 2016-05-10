@@ -4,17 +4,26 @@
     <title>Minimalist Analog Pebble watchface configuration</title>
   </head>
   <body>
+  <h3>Configuration for Minimalist Analog Pebble watchface</h3>
+  
 <table cellpadding="5">
-<tr><td colspan="2">
+<tr><td>
 <input id='inverse_colors_when_bluetooth_disconnected' type='checkbox'>
-  Inverse colors when bluetooth is disconnected 
+  Inverse colors when bluetooth is disconnected
+</input></td></tr>
+
+<tr><td>Please note that disconnect icon is not shown if inverse colors is selected</td></tr>
+<tr><td>
+<input id='vibrate_on_disconnect' type='checkbox'>
+  Vibrate on disconnect
 </input>
 </td></tr>
-<tr><td colspan="2">
+<tr><td>
 <input id='show_battery_status' type='checkbox'>
   Show battery status
 </input>
 </td></tr>
+
 <tr><td><input id='submit_button' type='button' value='Save'></td></tr>
 </table>
 <script>
@@ -22,16 +31,19 @@
         // Get the config data from the UI elements
         var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected').checked;
         var batteryCheckbox = document.getElementById('show_battery_status').checked;
+        var vibrateCheckbox = document.getElementById('vibrate_on_disconnect').checked;
 
         var options = {
           'inverse_colors_when_bluetooth_disconnected': inverseTickCheckbox ? 1 : 0,
           'show_battery_status': batteryCheckbox ? 1 : 0,
+          'vibrate_on_disconnect': vibrateCheckbox ? 1 : 0,
         };
         
         localStorage['inverse_colors_when_bluetooth_disconnected'] = options['inverse_colors_when_bluetooth_disconnected'];
         localStorage['show_battery_status'] = options['show_battery_status'];
+        localStorage['vibrate_on_disconnect'] = options['vibrate_on_disconnect'];        
         
-        //console.log('Got options; ' + JSON.stringify(options));
+        console.log('Got options; ' + JSON.stringify(options));
         return options;
     }
 
@@ -53,22 +65,24 @@
 
     // Add a 'click' listener
     submitButton.addEventListener('click', function() {
-//        console.log('Submit');
-    
-        var return_to = getQueryParam('return_to', 'pebblejs://close#');
+   
+    var return_to = getQueryParam('return_to', 'pebblejs://close#');
 
-        // Encode and send the data when the page closes
-        document.location = return_to + encodeURIComponent(JSON.stringify(getConfigData()));
+    // Encode and send the data when the page closes
+    document.location = return_to + encodeURIComponent(JSON.stringify(getConfigData()));
   });
   
   (function () {
     var inverseTickCheckbox = document.getElementById('inverse_colors_when_bluetooth_disconnected');
     var batteryCheckbox = document.getElementById('show_battery_status');
+    var vibrateCheckbox = document.getElementById('vibrate_on_disconnect');
     
     if (localStorage['inverse_colors_when_bluetooth_disconnected']) 
-        inverseTickCheckbox.value = localStorage['inverse_colors_when_bluetooth_disconnected'];
+        inverseTickCheckbox.checked = localStorage['inverse_colors_when_bluetooth_disconnected'];
     if (localStorage['show_battery_status']) 
-        batteryCheckbox.value = localStorage['show_battery_status'];
+        batteryCheckbox.checked = localStorage['show_battery_status'];
+    if (localStorage['vibrate_on_disconnect']) 
+        vibrateCheckbox.checked = localStorage['vibrate_on_disconnect'];        
   })();
         
 </script>
