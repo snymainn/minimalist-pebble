@@ -3,6 +3,7 @@
 	
 #define KEY_INVERSE_WHEN_DISCONNECTED 1
 #define KEY_SHOW_BATTERY_STATUS 2
+#define KEY_VIBRATE_ON_DISCONNECT 2
 
 #define INSET PBL_IF_ROUND_ELSE(1, 0)
 #define HOURS_RADIUS 3
@@ -29,9 +30,9 @@ static const GPathInfo HOUR_HAND_POINTS = {
 	{ 2, 0 },
 	{ 2, -15 },
 	{ 4, -15 },
-    { 4, -44 },
-	{ 0, -48 },
-	{ -4, -44 },
+    { 4, -38 },
+	{ 0, -42 },
+	{ -4, -38 },
 	{ -4, -15 },
 	{ -2, -15 }
   }

@@ -1,7 +1,8 @@
 {
     "appKeys": {
         "INVERSE_WHEN_DISCONNECTED" : 1,
-        "SHOW_BATTERY_STATUS" : 2
+        "SHOW_BATTERY_STATUS" : 2,
+        "VIBRATE_ON_DISCONNECT" : 3
     },
     "capabilities": [
         "configurable"

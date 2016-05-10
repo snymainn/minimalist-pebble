@@ -9,17 +9,17 @@ static TextLayer *s_day_label, *s_num_label;
 static GPath *s_minute_arrow, *s_hour_arrow;
 static char s_date_buffer[7], s_temp_buffer[5];
 
-static AppSync s_sync;
-static uint8_t s_sync_buffer[64];
+//static AppSync s_sync;
+//static uint8_t s_sync_buffer[64];
 
 static GColor gcolor_background, gcolor_hour_marks, gcolor_minute_marks, gcolor_numbers, gcolor_hour_hand, gcolor_minute_hand;
-static bool b_inverse_when_disconnected, b_show_battery_status;
+static bool b_inverse_when_disconnected, b_show_battery_status, b_vibrate_on_disconnect;
 
 static int s_battery_level;
 static char s_battery_buffer[5];
 
-static BitmapLayer *s_background_layer, *s_bt_icon_layer;
-static GBitmap *s_background_bitmap, *s_bt_icon_bitmap;
+static BitmapLayer *s_bt_icon_layer;
+static GBitmap *s_bt_icon_bitmap;
 
 static void battery_callback(BatteryChargeState state) {
   // Record the new battery level
@@ -29,10 +29,20 @@ static void battery_callback(BatteryChargeState state) {
 }
 
 static void bluetooth_callback(bool connected) {    
-    // Show icon if disconnected
-    layer_set_hidden(bitmap_layer_get_layer(s_bt_icon_layer), connected);
 
-    if(!connected && b_inverse_when_disconnected && gcolor_equal(gcolor_background, GColorBlack)) {
+    // If inversing, then always hide layer, else show depending on connected status
+    if (b_inverse_when_disconnected) {
+        layer_set_hidden(bitmap_layer_get_layer(s_bt_icon_layer), 1);
+    } else {
+        layer_set_hidden(bitmap_layer_get_layer(s_bt_icon_layer), connected);
+    }
+
+    if(!connected && b_vibrate_on_disconnect) {
+        // Issue a vibrating alert
+        vibes_double_pulse();
+    }
+
+    if(!connected && b_inverse_when_disconnected) {
 	    gcolor_background = GColorWhite;
 	    gcolor_minute_hand = GColorBlack;
 	
@@ -48,11 +58,9 @@ static void bluetooth_callback(bool connected) {
 		gcolor_hour_hand = GColorBlack;
     #endif
         window_set_background_color(window, gcolor_background);    
-        layer_mark_dirty(s_date_layer);
-        layer_mark_dirty(s_hands_layer);
-        layer_mark_dirty(s_battery_layer);
+      	//layer_mark_dirty(window_get_root_layer(window));
     }
-    if (connected && gcolor_equal(gcolor_background, GColorWhite)) {
+    if (connected && b_inverse_when_disconnected) {
     	// Default colors
 	    gcolor_background = GColorBlack;
 	    gcolor_minute_hand = GColorWhite;
@@ -69,11 +77,8 @@ static void bluetooth_callback(bool connected) {
 		gcolor_hour_hand = GColorWhite;
     #endif
         window_set_background_color(window, gcolor_background);
-        layer_mark_dirty(s_date_layer);
-        layer_mark_dirty(s_hands_layer);
-        layer_mark_dirty(s_battery_layer);
+       	//layer_mark_dirty(window_get_root_layer(window));
     }
-
 }
 
 static void load_persisted_values() {
@@ -82,10 +87,13 @@ static void load_persisted_values() {
 	if (persist_exists(KEY_INVERSE_WHEN_DISCONNECTED)) {
 	  b_inverse_when_disconnected = persist_read_int(KEY_INVERSE_WHEN_DISCONNECTED);
 	}
-
 	// SHOW_BATTERY_STATUS
 	if (persist_exists(KEY_SHOW_BATTERY_STATUS)) {
 	  b_show_battery_status = persist_read_int(KEY_SHOW_BATTERY_STATUS);
+	}
+	// VIBRATE ON DISCONNECT
+	if (persist_exists(KEY_VIBRATE_ON_DISCONNECT)) {
+	  b_vibrate_on_disconnect = persist_read_int(KEY_VIBRATE_ON_DISCONNECT);
 	}
 }
 
@@ -93,7 +101,6 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 
  	Tuple *inverse_when_disconnected_t = dict_find(iter, KEY_INVERSE_WHEN_DISCONNECTED);
 	if(inverse_when_disconnected_t) {
-		//APP_LOG(APP_LOG_LEVEL_INFO, "Inverse when disconnected %d", inverse_when_disconnected_t->value->uint8);
  		b_inverse_when_disconnected = inverse_when_disconnected_t->value->uint8;
 		persist_write_int(KEY_INVERSE_WHEN_DISCONNECTED, b_inverse_when_disconnected);
 		bluetooth_callback(connection_service_peek_pebble_app_connection()); 
@@ -101,15 +108,19 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 
 	Tuple *show_battery_status_t = dict_find(iter, KEY_SHOW_BATTERY_STATUS);
 	if(show_battery_status_t) {
-		//APP_LOG(APP_LOG_LEVEL_INFO, "Show battery_status %d", show_battery_status_t->value->uint8);
  		b_show_battery_status = show_battery_status_t->value->uint8;
 		persist_write_int(KEY_SHOW_BATTERY_STATUS, show_battery_status_t->value->uint8);
 		// Update meter
         layer_mark_dirty(s_battery_layer);
  	}
-	
+	Tuple *vibrate_on_disconnect_t = dict_find(iter, KEY_VIBRATE_ON_DISCONNECT);
+	if(vibrate_on_disconnect_t) {
+ 		b_vibrate_on_disconnect = vibrate_on_disconnect_t->value->uint8;
+		persist_write_int(KEY_VIBRATE_ON_DISCONNECT, vibrate_on_disconnect_t->value->uint8);
+ 	}	
 }
 
+/*
 static bool color_hour_marks(GDrawCommand *command, uint32_t index, void *context) {
   gdraw_command_set_stroke_color(command, gcolor_hour_marks);
   return true;
@@ -119,7 +130,7 @@ static bool color_minute_marks(GDrawCommand *command, uint32_t index, void *cont
   gdraw_command_set_stroke_color(command, gcolor_minute_marks);
   return true;
 }
-
+*/
 
 static int32_t get_angle_for_hour(int hour) {
   // Progress through 12 hours, out of 360 degrees
@@ -186,18 +197,22 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	struct tm *t = localtime(&now);
 
 	// date
-	graphics_context_set_text_color(ctx, gcolor_numbers);
+	graphics_context_set_fill_color(ctx, gcolor_minute_hand);
+	graphics_fill_circle(ctx,GPoint(bounds.size.w-36, bounds.size.h/2),10);
+	graphics_context_set_text_color(ctx, gcolor_background);
 	int offset = 0;
-	graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_14), 
-	    GRect(80, 75, 40 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), 
+	    GRect(88, 72, 40 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 
 
 	// minute hand
 	graphics_context_set_fill_color(ctx, gcolor_minute_hand);
-	//graphics_context_set_stroke_color(ctx, gcolor_minute_hand);
+	graphics_context_set_stroke_color(ctx, gcolor_minute_hand);
+	graphics_context_set_stroke_width(ctx,2);
 	gpath_rotate_to(s_minute_arrow, TRIG_MAX_ANGLE * t->tm_min / 60);
-	gpath_draw_filled(ctx, s_minute_arrow);
-
+	//gpath_draw_filled(ctx, s_minute_arrow);
+	gpath_draw_outline(ctx, s_minute_arrow);
+	
 	// hour hand
 	graphics_context_set_fill_color(ctx, gcolor_hour_hand);
 	//graphics_context_set_stroke_color(ctx, gcolor_hour_hand);
@@ -213,7 +228,7 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 	time_t now = time(NULL);
 	struct tm *t = localtime(&now);
 
-	strftime(s_date_buffer, sizeof(s_date_buffer), "%a %d", t);
+	strftime(s_date_buffer, sizeof(s_date_buffer), "%d", t);
 	uppercase(s_date_buffer);
 }
 
@@ -244,6 +259,9 @@ static void battery_update_proc(Layer *layer, GContext *ctx) {
     }
 }
 
+static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
+	layer_mark_dirty(window_get_root_layer(window));
+}
 
 static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
@@ -337,6 +355,9 @@ static void init() {
 	gpath_move_to(s_minute_arrow, center);
 	gpath_move_to(s_hour_arrow, center);
 
+
+    tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
+    
 	app_message_register_inbox_received(inbox_received_handler);
 	app_message_open(64, 64);
 

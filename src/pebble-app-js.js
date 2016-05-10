@@ -14,6 +14,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
 	toggleDict.INVERSE_WHEN_DISCONNECTED = configData.inverse_colors_when_bluetooth_disconnected;
 	toggleDict.SHOW_BATTERY_STATUS = configData.show_battery_status;
+	toggleDict.VIBRATE_ON_DISCONNECT = configData.vibrate_on_disconnect;
 
 	Pebble.sendAppMessage(toggleDict, function() {
 		console.log('Send toggles successful: ' + JSON.stringify(toggleDict));
