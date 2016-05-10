@@ -39,9 +39,9 @@
           'vibrate_on_disconnect': vibrateCheckbox ? 1 : 0,
         };
         
-        localStorage.setItem('inverse_colors_when_bluetooth_disconnected', options['inverse_colors_when_bluetooth_disconnected');
-        localStorage.setItem('show_battery_status', options['show_battery_status');
-        localStorage.setItem('vibrate_on_disconnect', options['vibrate_on_disconnect');        
+        localStorage.setItem('inverse_colors_when_bluetooth_disconnected', options['inverse_colors_when_bluetooth_disconnected']);
+        localStorage.setItem('show_battery_status', options['show_battery_status']);
+        localStorage.setItem('vibrate_on_disconnect', options['vibrate_on_disconnect']);        
         
         console.log('Got options; ' + JSON.stringify(options));
         return options;
