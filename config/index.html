@@ -39,9 +39,9 @@
           'vibrate_on_disconnect': vibrateCheckbox ? 1 : 0,
         };
         
-        localStorage['inverse_colors_when_bluetooth_disconnected'] = options['inverse_colors_when_bluetooth_disconnected'];
-        localStorage['show_battery_status'] = options['show_battery_status'];
-        localStorage['vibrate_on_disconnect'] = options['vibrate_on_disconnect'];        
+        localStorage.setItem('inverse_colors_when_bluetooth_disconnected', options['inverse_colors_when_bluetooth_disconnected');
+        localStorage.setItem('show_battery_status', options['show_battery_status');
+        localStorage.setItem('vibrate_on_disconnect', options['vibrate_on_disconnect');        
         
         console.log('Got options; ' + JSON.stringify(options));
         return options;
@@ -78,11 +78,11 @@
     var vibrateCheckbox = document.getElementById('vibrate_on_disconnect');
     
     if (localStorage['inverse_colors_when_bluetooth_disconnected']) 
-        inverseTickCheckbox.checked = localStorage['inverse_colors_when_bluetooth_disconnected'];
+        inverseTickCheckbox.checked = localStorage.getItem('inverse_colors_when_bluetooth_disconnected');
     if (localStorage['show_battery_status']) 
-        batteryCheckbox.checked = localStorage['show_battery_status'];
+        batteryCheckbox.checked = localStorage.getItem('show_battery_status');
     if (localStorage['vibrate_on_disconnect']) 
-        vibrateCheckbox.checked = localStorage['vibrate_on_disconnect'];        
+        vibrateCheckbox.checked = localStorage.getItem('vibrate_on_disconnect');        
   })();
         
 </script>
