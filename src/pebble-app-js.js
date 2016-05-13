@@ -1,6 +1,6 @@
 
 Pebble.addEventListener('showConfiguration', function() {
-  var url = 'https://rawgit.com/snymainn/minimalist-pebble/master/config/index.html';
+  var url = 'https://cdn.rawgit.com/snymainn/minimalist-pebble/0.5/config/index.html';
   console.log('Showing configuration page: ' + url);
 
   Pebble.openURL(url);
