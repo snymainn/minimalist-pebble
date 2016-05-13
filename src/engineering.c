@@ -28,8 +28,8 @@ static void battery_callback(BatteryChargeState state) {
   layer_mark_dirty(s_battery_layer);
 }
 
-static void bluetooth_callback(bool connected) {    
-
+static void handle_bluetooth_change(bool connected, bool use_vibration)
+{
     // If inversing, then always hide layer, else show depending on connected status
     if (b_inverse_when_disconnected) {
         layer_set_hidden(bitmap_layer_get_layer(s_bt_icon_layer), 1);
@@ -37,7 +37,7 @@ static void bluetooth_callback(bool connected) {
         layer_set_hidden(bitmap_layer_get_layer(s_bt_icon_layer), connected);
     }
 
-    if(!connected && b_vibrate_on_disconnect) {
+    if(!connected && b_vibrate_on_disconnect && use_vibration) {
         // Issue a vibrating alert
         vibes_double_pulse();
     }
@@ -81,6 +81,11 @@ static void bluetooth_callback(bool connected) {
     }
 }
 
+
+static void bluetooth_callback(bool connected) {    
+    handle_bluetooth_change(connected, 1);
+}
+
 static void load_persisted_values() {
 
 	// INVERSE IF BLUETOOTH DISCONNECTED
@@ -103,7 +108,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 	if(inverse_when_disconnected_t) {
  		b_inverse_when_disconnected = inverse_when_disconnected_t->value->uint8;
 		persist_write_int(KEY_INVERSE_WHEN_DISCONNECTED, b_inverse_when_disconnected);
-		bluetooth_callback(connection_service_peek_pebble_app_connection()); 
+		handle_bluetooth_change(connection_service_peek_pebble_app_connection(), 0); 
  	}
 
 	Tuple *show_battery_status_t = dict_find(iter, KEY_SHOW_BATTERY_STATUS);
@@ -300,7 +305,7 @@ static void window_load(Window *window) {
     battery_callback(battery_state_service_peek());
 
     // Show the correct state of the BT connection from the start
-    bluetooth_callback(connection_service_peek_pebble_app_connection());
+    handle_bluetooth_change(connection_service_peek_pebble_app_connection(), 0);
 }
 
 static void window_unload(Window *window) {
