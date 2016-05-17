@@ -90,15 +90,17 @@ static void load_persisted_values() {
 
 	// INVERSE IF BLUETOOTH DISCONNECTED
 	if (persist_exists(KEY_INVERSE_WHEN_DISCONNECTED)) {
-	  b_inverse_when_disconnected = persist_read_int(KEY_INVERSE_WHEN_DISCONNECTED);
+	  b_inverse_when_disconnected = persist_read_bool(KEY_INVERSE_WHEN_DISCONNECTED);
 	}
 	// SHOW_BATTERY_STATUS
 	if (persist_exists(KEY_SHOW_BATTERY_STATUS)) {
-	  b_show_battery_status = persist_read_int(KEY_SHOW_BATTERY_STATUS);
+	  b_show_battery_status = persist_read_bool(KEY_SHOW_BATTERY_STATUS);
 	}
+
 	// VIBRATE ON DISCONNECT
 	if (persist_exists(KEY_VIBRATE_ON_DISCONNECT)) {
-	  b_vibrate_on_disconnect = persist_read_int(KEY_VIBRATE_ON_DISCONNECT);
+	  b_vibrate_on_disconnect = persist_read_bool(KEY_VIBRATE_ON_DISCONNECT);
+	  
 	}
 }
 
@@ -107,21 +109,21 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
  	Tuple *inverse_when_disconnected_t = dict_find(iter, KEY_INVERSE_WHEN_DISCONNECTED);
 	if(inverse_when_disconnected_t) {
  		b_inverse_when_disconnected = inverse_when_disconnected_t->value->uint8;
-		persist_write_int(KEY_INVERSE_WHEN_DISCONNECTED, b_inverse_when_disconnected);
+		persist_write_bool(KEY_INVERSE_WHEN_DISCONNECTED, b_inverse_when_disconnected);
 		handle_bluetooth_change(connection_service_peek_pebble_app_connection(), 0); 
  	}
 
 	Tuple *show_battery_status_t = dict_find(iter, KEY_SHOW_BATTERY_STATUS);
 	if(show_battery_status_t) {
  		b_show_battery_status = show_battery_status_t->value->uint8;
-		persist_write_int(KEY_SHOW_BATTERY_STATUS, show_battery_status_t->value->uint8);
+		persist_write_bool(KEY_SHOW_BATTERY_STATUS, b_show_battery_status);
 		// Update meter
         layer_mark_dirty(s_battery_layer);
  	}
 	Tuple *vibrate_on_disconnect_t = dict_find(iter, KEY_VIBRATE_ON_DISCONNECT);
 	if(vibrate_on_disconnect_t) {
  		b_vibrate_on_disconnect = vibrate_on_disconnect_t->value->uint8;
-		persist_write_int(KEY_VIBRATE_ON_DISCONNECT, vibrate_on_disconnect_t->value->uint8);
+		persist_write_bool(KEY_VIBRATE_ON_DISCONNECT, b_vibrate_on_disconnect);
  	}	
 }
 
